@@ -1,0 +1,7 @@
+https://cran.r-project.org/doc/manuals/R-intro.html#Logical-vectors
+
+http://stackoverflow.com/questions/12125980/how-to-create-a-new-variable-in-a-data-frame-based-on-a-condition
+
+http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually
+
+https://www.washingtonpost.com/news/speaking-of-science/wp/2015/07/21/the-chemistry-that-makes-your-wine-taste-good-or-bad/?utm_term=.e1b3504c7d3b
