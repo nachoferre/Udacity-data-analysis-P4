@@ -1,6 +1,9 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
 ---
 
 Before starting this project i did some reasearch in order to get some insights about white wines. The chemicals in the wine are only the 2% of the composition of wine. The other 98% are water and alcohol. Some studies have shown that there are no specific chemicals that are directly related to the quality. Now that we know this I am prepared to face the fact that the plots might not show any great differences.
@@ -194,7 +197,18 @@ This last group of plots show a slight tendency of the high quality wine towards
 Once I have studied all the possible direct relationships with quality, I am going to investigate these plots that seemed promissing.
 ### 
 ### Alcohol
-```{r}
-ggpairs(wines)
+```{r, message=FALSE, fig.width = 18, fig.height = 20}
+ggpairs(wines, mapping = aes(color=classification), columns = c("X", "fixed.acidity", "volatile.acidity", "citric.acid", "residual.sugar", "chlorides", "free.sulfur.dioxide", "total.sulfur.dioxide", "density", "pH", "sulphates", "alcohol"))
 ```
+
+```{r, message=FALSE}
+ggplot(wines, aes(x = density, y = alcohol, color = classification)) +
+  geom_point()+
+  coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99)))
+```
+
+```{r}
+ggscatmat(wines, alpha = 1, color= "classification", columns = 1:8)
+```
+
 
