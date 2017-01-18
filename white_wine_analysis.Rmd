@@ -202,7 +202,7 @@ ggpairs(wines, mapping = aes(color=classification), columns = c("X", "fixed.acid
 ```
 
 ```{r, message=FALSE}
-ggplot(wines, aes(x = density, y = alcohol, color = classification)) +
+ggplot(wines[wines$classification == "medium" | wines$classification == "bad",], aes(x = density, y = alcohol, color = classification)) +
   geom_point()+
   coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99)))
 ```

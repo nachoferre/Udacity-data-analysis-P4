@@ -5,3 +5,13 @@ http://stackoverflow.com/questions/12125980/how-to-create-a-new-variable-in-a-da
 http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually
 
 https://www.washingtonpost.com/news/speaking-of-science/wp/2015/07/21/the-chemistry-that-makes-your-wine-taste-good-or-bad/?utm_term=.e1b3504c7d3b
+
+http://www.dummies.com/education/math/statistics/how-to-interpret-a-correlation-coefficient-r/
+
+http://stackoverflow.com/questions/17963962/plot-size-and-resolution-with-r-markdown-knitr-pandoc-beamer
+
+http://ggobi.github.io/ggally/#alterations
+
+http://www.aromadictionary.com/articles/sulfurdioxide_article.html
+
+http://waterhouse.ucdavis.edu/whats-in-wine/fixed-acidity

@@ -189,7 +189,7 @@ p2 <- ggplot(aes(y=X, x = alcohol, color = quality), data = wines) +
 grid.arrange(p1, p2, ncol = 1)
   
 ```
-This last group of plots show a slight tendency of the high quality wine towards the highest alcohol values. As we can see the medium quality wine tend to have alcohol levels between 8.5 and 11. However to prove this correlation we are going to have to investigate this graph further.
+This last group of plots show a slight tendency of the high quality wine towards the highest alcohol values. As we can see the medium quality wine tend to have alcohol levels between 8.5 and 11. However after some tweaking of the data I realized that the high quality wines are spread across the whole range of values, which means that there is no direct correlation between the alcohol and the quality.
 
 # Univariate Analysis
 
@@ -209,18 +209,54 @@ Yes. I created the variable named classification. This variable is a factor whic
 In many of the plots I had to perform some trimming of the data in order to take out some outliers, so we could focus more where the 98% of the data was focused. I also changed the data type of the quality variable given that it was being identified as a normal integer. I decided to parse it to factor so I could create groups with each of the marks given by the experts.
 
 # Bivariate Plots Section
-```{r echo=FALSE, Bivariate_Plots}
+```{r, message=FALSE, fig.width = 18, fig.height = 20, Bivariate_Plots}
+ggpairs(wines, mapping = aes(color=classification), columns = c("X", "fixed.acidity", "volatile.acidity", "citric.acid", "residual.sugar", "chlorides", "free.sulfur.dioxide", "total.sulfur.dioxide", "density", "pH", "sulphates", "alcohol"))
+```
+Now that we can see the correlations for every variable in our dataset I am going to dig into the most promising ones in order to understand its relationship and to visualizeit more clearly.
+```{r}
+ggplot(wines, aes(x = density, y = alcohol, color = quality)) +
+  geom_point()+
+  coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99)))
 
 ```
+In this visualization it can be clearly spotted the progresion of our points given their quality. As we can see the quality increases when the density lowers and the alohol volume increases. This might be explained by the fact that the density of alcohol is lower than the density of the water, to be precise is 0.789 g/cm^3, whereas the water has a desity of 1 g/cm^3.
+Now we are going to look into the relationship between the total sulfur dioxide and the free sulfur dioxide, but as it can be easly seen there is a relationship given that both of the variables are about the sulfur dioxide.
+```{r}
+ggplot(wines, aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide, color = quality)) +
+  geom_point() 
+
+```
+As we can see this correlation doesnt give us much insight about how this affects quality, given that the different qualites have points scattered across the plot. In order to prove this we executed the code showing different layers each time and we prove that the combination of values of free and total sulfur dioxide  doesnt have a direct impact in the quality of the wine.
+
+Sulfur dioxide plays two important roles. Firstly, it is an anti-microbial agent, and as such is used to help curtail the growth of undesirable fault producing yeasts and bacteria. Secondly, it acts as an antioxidant, safeguarding the wine's fruit integrity and protecting it against browning. This explains the need for having sulfur dioxide in the wine and why great quantities of it can be harmful to our quality. We can even see in the plot that some of the points are "far" from the main group meaning higher values and as we can see all does wines are classified as bad quality and some as medium.
+
+```{r}
+ggplot(wines, aes(x = fixed.acidity, y = pH, color = quality)) +
+  geom_point() 
+
+```
+Again we see some correlation between two different variables, but it doesnt seem to really relate to the quality. After some research we found out that the ph stands for "Potential of Hydrogen" which is a numeric scale used to specify the acidity or basicity. So once we look at the pH table we see that the values that we are working here are for extremely acidic substances, wich relates with the fixed acidity values given that they are providing information about the same concept.
+Acids impart the sourness or tartness that is a fundamental feature in wine taste.  Wines lacking in acid are "flat."  Chemically the acids influence titrable acidity which affects taste and pH which affects  color, stability to oxidation, and consequantly the overall lifespan of a wine (Water hause lab UC DAVIS university). Thanks to the information provided by UC Davis university we know that the acidity has impact in the taste, however none significantly in our data. This could be due to the fact that the acidity of a wine is related to where was it harvested. As said by UC Davis university "wines produced from cool climate grapes are high in acidity and thus taste sour".It would be a nice addition to the dataset the location of the different wines so we could gain some insight about the wines tested.
 
 # Bivariate Analysis
+For the purpouse of this part of the project I decided to use the library GGally in order to develop a comparisson graph of all the different features of the dataset. In addition to that the ggpairs function also shows the correlation between the compared variables. Finally I decided to apply coloring of the data som the points will be colored by their stablished quality.
 
 ### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+After some hard look at the different graphs of our data, I found one relationship that has an indirect correlation with the quality. That is the relationship between the density and the alcohol of the wine. As we can see thanks to the correlations calculated by ggpairs we can see that the correlation between the quality and the density-alcohol relationship is:
+ * bad = -0.683
+ * medium = -0.738
+ * good = -0.844
+As we can see the relationship between them is really strong eventhough is inversed. It is also good to know that this relationship becomes stronger as we go towards higher qualities.
+This has been the strongest relationship we have come across during our bivariate study of this dataset. As explained earlier this is due to the lighter density of the alcohol. This gives us some explanation of why there seemed to be some kind of relationship between the alcohol and the quality, but with a more easy to spot clarification.
+We also have studied more relations like between free and total sulfur dioxide and quality but we havent gotten anywhere with it given that there didnt seem to be any real relationship between them and quality, we might qualify it as a false positive.
+The same can be said for the fixed acidity and the pH. It must be said that for a person well-versed in chemistry, this relationships would have been obvious from the start, as pointed out by some colleagues I consulted during my research. However it is allways good to be able to prove a not knowing relationship due to the fact that that pushes you to research and understand the dataset I am working on further.
 
 ### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
-
+Here we could talk about how many of the variables in our dataset are dependant from one another. We have learn that the volume is intimately related to the volume of alcohol, as well as the pH and the fixed acidity. There are more abvious ones like the free sulfur dioxide and the total sulfur dioxide. 
+In addition we can also relate the residual sugars with the alcohol and the sulfur dioxide. Because excesive sulfur dioxide can prevent the yeast from converting all the sugar into alcohol thus affecting the other variables, decreasing the alcohol levels and rising the residual sugars. In a more direct manner we could say that the residual sugar and the alcohol are directly related given that alcohol is derived from it, and thanks two the previous sentence we now know why the sugar conversion to alcohol is stopped.
 ### What was the strongest relationship you found?
-
+The strongest relationship found is the one between the density-alcohol with the quality. Thanks to ggpair we found out a nearly perfect downhill linear relationship. And once we knew that the relationship between alcohol and density it was easier to find out how it affected the quality. It is good to know that we have some relationship that can be attributed to the quality of the wine, even though it is not the only one it is the biggest with a correlation value around -0.8.
+The rest of the variables studied have some kind of relatonship with the quality but it is not a great one. I continue with the hypothesys that the quality can not be tied to an specfic but to the whole group of variables, given that many of them have relationships between them.
 
 
 
