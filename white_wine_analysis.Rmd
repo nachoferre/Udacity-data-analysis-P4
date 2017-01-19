@@ -41,6 +41,29 @@ wines$classification <- as.factor(wines$classification)
 ```
 
 
+```{r}
+ggplot(wines, aes(x=alcohol))+
+  geom_histogram(binwidth = 0.09)
+```
+A we can see there seem to be some gaps between the different levels of alcohol, it is curious not to see a continous flow that could be expected. However we can see that there is still a flow that generates a mean of 10.51 which may seem strange given that the highest values fall near 9.  
+```{r}
+ggplot(wines, aes(x=density))+
+  geom_histogram(binwidth = 0.001) +
+  coord_cartesian(xlim = c(quantile(wines$density, 0.0), quantile(wines$density, 0.999)))
+```
+The density values are really close to one. After some investigation we found that waters density is 1 so given that wine contains alcohol, which has a density bellow 1. Knowing this we might ask ourselves how come there are wines with density over 1?
+This could be due to the fact that some wines could have a great amount of chemicals with a density much greater than wine. In the next part it could be interesting to se the comparisson between the alcohol and density features.
+
+```{r}
+ggplot(wines, aes(x=chlorides))+
+  geom_histogram() 
+```
+
+```{r}
+ggplot(wines, aes(x=pH))+
+  geom_histogram() 
+```
+
 
 ## Univariate Analysis
 Once we have created that new variable, its time to start plotting our data. In this comparisson we are going to see the distribution of each feature in our dataset with every value colored by their quality or classification. Once we have found the variables that show a relationship between itself and quality we will develop it further so we can learn as much as we can from this dataset.
@@ -211,4 +234,19 @@ ggplot(wines[wines$classification == "medium" | wines$classification == "bad",],
 ggscatmat(wines, alpha = 1, color= "classification", columns = 1:8)
 ```
 
-
+```{r}
+lm1 <- lm( as.numeric(quality) ~ alcohol/density, data = wines )
+lm2 <- update(lm1, ~ . + fixed.acidity)
+lm3 <- update(lm2, ~ . + volatile.acidity)
+lm4 <- update(lm3, ~ . + citric.acid)
+lm5 <- update(lm4, ~ . + residual.sugar)
+lm6 <- update(lm5, ~ . + chlorides)
+lm7 <- update(lm6, ~ . + free.sulfur.dioxide)
+lm8 <- update(lm7, ~ . + total.sulfur.dioxide)
+lm9 <- update(lm8, ~ . + pH)
+lm10 <- update(lm9, ~ . + sulphates)
+summary(lm10)
+```
+```{r}
+plot(lm10)
+```
