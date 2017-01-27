@@ -15,3 +15,7 @@ http://ggobi.github.io/ggally/#alterations
 http://www.aromadictionary.com/articles/sulfurdioxide_article.html
 
 http://waterhouse.ucdavis.edu/whats-in-wine/fixed-acidity
+
+http://rpubs.com/aaronsc32/linear-relationship-pearson-r-correlation
+
+http://www.cookbook-r.com/Manipulating_data/Changing_the_order_of_levels_of_a_factor/

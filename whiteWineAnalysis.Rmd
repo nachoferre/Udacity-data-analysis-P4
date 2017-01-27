@@ -3,7 +3,13 @@ Searching for the root of good white wine
 #### by Ignacio Ferreras Astorqui
 Before starting this project i did some research in order to get some insights about white wines. The chemicals in the wine are only the 2% of the composition of wine. The other 98% are water and alcohol. Some studies have shown that there are no specific chemicals that are directly related to the quality. Now that we know this I am prepared to face the fact that the plots might not show any great differences.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=FALSE, warning=FALSE, message=FALSE)
+# global config to normalize the plots and help to avoid repetitive configs
+```
+
+```{r  packages}
 # Load all of the packages that you end up using
 # in your analysis in this code chunk.
 
@@ -26,35 +32,80 @@ library(gridExtra)
 wines = read.csv("wineQualityWhites.csv")
 
 wines$quality <- as.factor(wines$quality)
-
+# Here we add a new variable with the data of quality grupped in 3 different chunks
 wines$classification <- ifelse((wines$quality == 3) | (wines$quality == 4), "bad", ifelse((wines$quality == 5) | (wines$quality == 6), "medium", "good"))
 wines$classification <- as.factor(wines$classification)
+wines$classification <- ordered(wines$classification, levels = c("bad", "medium", "good"))
+# Now I have converted it to a factor and order it so it is reasonable
+```
+
+```{r echo=FALSE, Useful_functions}
+#Creation of one function so the creation of a basic histogram can be made easily and avoiding repetitions, with only sending the x variable and the binwidth
+create_plot <- function(variable, binwidth = 0.01) {
+  return(ggplot(aes_string(x = variable), data = wines) + 
+           geom_histogram(binwidth = binwidth))}
+# This function helps to create scatterplots with an especific set of colors given the x, y and color passed through parameters 
+create_plot_compare <- function(variable_x, variable_y, color) {
+  return(ggplot(aes_string(x = variable_x, y = variable_y, color = color), data = wines) + 
+           geom_point() +
+           scale_color_brewer(palette = "GnBu"))}
+
+correlation <- function(variable1, variable2, n){
+  sxy <- sum(variable1 * variable2) - (sum(variable1) * sum(variable2)) / n 
+  sxx <- sum(variable1^2) - sum(variable1)^2/n
+  syy <- sum(variable2^2) - sum(variable2)^2/n
+  return (sxy / sqrt(sxx * syy))
+}
 ```
 
 # Univariate Plots Section
 Before I start plotting it is important that we study the each and every variable for themselves. This will be done in order to get some insight of our data.
+
 ```{r echo=FALSE, Univariate_Plots}
 summary(wines)
 ```
+
 In the summary above we can see the distribution of the quality of our data in a more specific way. For the purpose of the project we are going to establish a "logical barrier" in which we are going to declare good wine as the ones with a 7 or more, normal wine the ones between 5 and 7 (not including 7) and finally as bad wine everything under 5. I hope that can help us to infer how the different variables affect the quality. This has been decided due to the reduced numbers in high grade wines, with a 9 for example, because we have to face the fact that in such reduced numbers an outliers can greatly affect the conclusions we are going to establish. However, if we decide to establish a trend rather an specific value, we will be able to predict how some values in our variables affect the quality of our wine. For example if we see that the fixed.acidity in the good wines tends to higher values and the normal and bad ones concentrate in lower ones, it will be safe to assume that a higher value in fixed.acidity will affect the final quality of our product. 
 Given that our main objective is to asses which varaibles or characteristics affect primarily to the quality of our wine, first I think its important to know the distribution of our data.
-```{r echo=FALSE, Univariate_Plots_1}
+
+```{r  Univariate_Plots_1}
 ggplot(aes(x=quality), data = wines) + 
   geom_bar()
 ```
+
 As we can see a great number of our wines score a 6 and just a little percentage scores an 8 or higher. Once we know that the amount of these wines is reduced we need to observe how they are shown in the following plots.
-```{r echo=FALSE, Univariate_Plots_2}
-ggplot(wines, aes(x=alcohol))+
-  geom_histogram(binwidth = 0.09)
+
+```{r Univariate_Plots_2}
+create_plot('alcohol', 0.09)
 ```
+
 A we can see there seem to be some gaps between the different levels of alcohol, it is curious not to see a continuous flow that could be expected. However we can see that there is still a flow that generates a mean of 10.51 which may seem strange given that the highest values fall near 9.  
-```{r echo=FALSE, Univariate_Plots_3}
-ggplot(wines, aes(x=density))+
-  geom_histogram(binwidth = 0.001) +
+
+```{r Univariate_Plots_3}
+create_plot('density', 0.001)+
   coord_cartesian(xlim = c(quantile(wines$density, 0.0), quantile(wines$density, 0.999)))
 ```
+
 The density values are really close to one. After some investigation we found that waters density is 1 so given that wine contains alcohol, which has a density bellow 1. Knowing this we might ask ourselves how come there are wines with density over 1?
 This could be due to the fact that some wines could have a great amount of chemicals with a density much greater than wine. In the next part it could be interesting to see the comparison between the alcohol and density features.
+
+```{r Univariate_Plots_4}
+create_plot('pH', 0.1)
+```
+
+Here we see the distribution of the pH values across our dataset. The preferred value of our data seems to be between 3.0 a 3.25. Given the significance of the pH values it is interesting to see that are some values that are getting close to 4. which mean that those wines are less acid. The same can be said for those values closing in on 0, which will mean that they are extremely acid. One thing that could be interesting is to see if there is any correlation between the acidity of a wine and its quality.
+
+```{r Univariate_Plots_5}
+create_plot('volatile.acidity', 0.01)
+```
+
+Looking at the volatile acidity distribution we see that almost the whole dataset converge around the 0.3 value. It looks that the values are very rarely above 1. It is interesting to see that the values seem to constantly decrease towards higher values. Looking at this plot makes me wonder about how come there are wines with a volatile acidity that its more than three times higher than the average. Could this affect the quality, I will look into it in the next parts.  
+
+```{r Univariate_Plots_6}
+create_plot('total.sulfur.dioxide', 10)
+```
+
+In this case the plot seems to be a little bit symmetrical converging around 100 and 150. Taking into account that there seem to be some outliers that have values above 300. In this case we call them outliers because as you can see they seem to fall apart from one another and visually we cant count more than 4 or 5 wines. This can indicate the existence of wines with really different values that can hurt possible predictions or future plots.
 
 # Univariate Analysis
 
@@ -84,151 +135,128 @@ For all the plots I am using an special set of colors, given that ggplot2 colors
 Its time to start plotting our data. In this comparison we are going to see the distribution of each feature in our dataset with every value colored by their quality or classification. Once we have found the variables that show a relationship between itself and quality we will develop it further so we can learn as much as we can from this dataset.
 
 
-```{r echo=FALSE, Bivariate_Plots}
+```{r Bivariate_Plots}
 
-p1 <- ggplot(aes(y=X, x = fixed.acidity, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
-p2 <- ggplot(aes(y=X, x = fixed.acidity, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
+p1 <- create_plot_compare('fixed.acidity', 'X', "classification")
+p2 <- create_plot_compare('fixed.acidity', 'X', "quality")
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 As we can see the biggest part of the results are between five to eight of fixed.acidity approximately. There doesn't seem to be any changes in the behavior of the data regarding the quality in this two plots.Unfortunately I don't seem to notice any direct relationship between the quality and the fixed acidity.  
-```{r echo=FALSE, Bivariate_Plots_1}
 
-p1 <- ggplot(aes(y=X, x = volatile.acidity, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
-p2 <- ggplot(aes(y=X, x = volatile.acidity, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
+```{r Bivariate_Plots_1}
+
+p1 <- create_plot_compare('volatile.acidity', 'X', "classification")
+p2 <- create_plot_compare('volatile.acidity', 'X', "quality")
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 This plots doesn't show us any trend of the quality due to the volatile.acidity. However we could speculate that the data is somewhat ordered given some "layers" around the 1000 and 3000 values in X. That can be more easily spotted in the first plot due to the fact that there are less colors.
-```{r echo=FALSE, Bivariate_Plots_2}
 
-p1 <- ggplot(aes(y=X, x = citric.acid, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_2}
+
+p1 <- create_plot_compare('citric.acid', 'X', "classification") +
   coord_cartesian(xlim = c(0,quantile(wines$citric.acid, 0.95)))
-p2 <- ggplot(aes(y=X, x = citric.acid, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('citric.acid', 'X', "quality") +
   coord_cartesian(xlim = c(0,quantile(wines$citric.acid, 0.95)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
-The previous plots doesn't show any particular relationship between the citric acid and the quality of the wine. There are multiple values of different qualities with the same values of citric acid. That doesn't mean there is no relationship between the citric acid and the quality, it means that there is no direct relationship between them. However there could be an indirect relationship.  
-```{r echo=FALSE, Bivariate_Plots_3}
 
-p1 <- ggplot(aes(y=X, x = residual.sugar, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+The previous plots doesn't show any particular relationship between the citric acid and the quality of the wine. There are multiple values of different qualities with the same values of citric acid. That doesn't mean there is no relationship between the citric acid and the quality, it means that there is no direct relationship between them. However there could be an indirect relationship. 
+
+```{r Bivariate_Plots_3}
+
+p1 <- create_plot_compare('residual.sugar', 'X', "classification") +
   coord_cartesian(xlim = c(0,quantile(wines$residual.sugar, 0.95)))
-p2 <- ggplot(aes(y=X, x = residual.sugar, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('residual.sugar', 'X', "quality") +
   coord_cartesian(xlim = c(0,quantile(wines$residual.sugar, 0.95)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 This plots show a little more promise, given the fact that there seems to be a bigger concentration of high quality wine with a residual sugar near 0. In order to look into it I will take out the outliers so we can see the data more thoroughly. Now that the outliers have been removed we see that there is a pretty significant build up of good quality wines with a residual sugar from 2 to 5. In the next part this variable will be investigated further so we can prove its relationship with the quality variable.
-```{r echo=FALSE, Bivariate_Plots_4}
 
-p1 <- ggplot(aes(y=X, x = chlorides, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_4}
+
+p1 <- create_plot_compare('chlorides', 'X', "classification") +
   coord_cartesian(xlim = c(0,quantile(wines$chlorides, 0.95)))
-p2 <- ggplot(aes(y=X, x = chlorides, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('chlorides', 'X', "quality") +
   coord_cartesian(xlim = c(0,quantile(wines$chlorides, 0.95)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 Thanks to this plot we can see that there could be a relationship between the chlorides and the quality, given that there seems to be a concentration of good quality wines for chloride concentrations between 0.02 and 0.04. However thanks to some tweaking of the data and some visual comparisons of the two plots, each showing the different factors. Thanks to it, we realized that there is no correlation between the two variables.
-```{r echo=FALSE, Bivariate_Plots_5}
 
-p1 <- ggplot(aes(y=X, x = free.sulfur.dioxide, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_5}
+
+p1 <- create_plot_compare('free.sulfur.dioxide', 'X', "classification") +
   coord_cartesian(xlim = c(0,quantile(wines$free.sulfur.dioxide, 0.95)))
-p2 <- ggplot(aes(y=X, x = free.sulfur.dioxide, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('free.sulfur.dioxide', 'X', "quality") +
   coord_cartesian(xlim = c(0,quantile(wines$free.sulfur.dioxide, 0.95)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 As the previous plots this one doesn't show any special patterns indicating that there is a direct relationship between quality and the free sulfur dioxide quantities.
-```{r echo=FALSE, Bivariate_Plots_6}
 
-p1 <- ggplot(aes(y=X, x = total.sulfur.dioxide, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_6}
+
+p1 <- create_plot_compare('total.sulfur.dioxide', 'X', "classification") +
   coord_cartesian(xlim = c(0,quantile(wines$total.sulfur.dioxide, 0.98)))
-p2 <- ggplot(aes(y=X, x = total.sulfur.dioxide, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('total.sulfur.dioxide', 'X', "quality") +
   coord_cartesian(xlim = c(0,quantile(wines$total.sulfur.dioxide, 0.98)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 These plots are looking for a relationship between the quality and the total sulfur dioxide. As we can see there doesn't seem to be any direct relationship between the variables.
-```{r echo=FALSE, Bivariate_Plots_7}
 
-p1 <- ggplot(aes(y=X, x = density, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_7}
+
+p1 <- create_plot_compare('density', 'X', "classification") +
   coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.95)))
-p2 <- ggplot(aes(y=X, x = density, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('density', 'X', "quality") +
   coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.95)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 These plots are showing the relationship between the density of white wine and its quality. However it doesn't seem to be any correlation between the two of them. Thanks to some tweaks,  was able to see how the low quality wines are spread across the different values, the same happens with the medium quality ones (5-6).
-```{r echo=FALSE, Bivariate_Plots_8}
 
-p1 <- ggplot(aes(y=X, x = pH, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+```{r Bivariate_Plots_8}
+
+p1 <- create_plot_compare('pH', 'X', "classification") +
   coord_cartesian(xlim = c(quantile(wines$pH, 0.00),quantile(wines$pH, 0.98)))
-p2 <- ggplot(aes(y=X, x = pH, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2") +
+p2 <- create_plot_compare('pH', 'X', "quality") +
   coord_cartesian(xlim = c(quantile(wines$pH, 0.00),quantile(wines$pH, 0.98)))
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 As we can see the different levels of pH doesn't seem to have any effect in the quality of the wine. It wasn't even necessary to separate the different qualities in order to see the lack of correlation. Due to the fact that the values are completely scattered above the plot.
-```{r echo=FALSE, Bivariate_Plots_9}
 
-p1 <- ggplot(aes(y=X, x = sulphates, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
-p2 <- ggplot(aes(y=X, x = sulphates, color = quality), data = wines) +
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
+```{r Bivariate_Plots_9}
+
+p1 <- create_plot_compare('sulphates', 'X', "classification")
+p2 <- create_plot_compare('sulphates', 'X', "quality")
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 The different values of sulphates across our dataset show us a non existing relationship between the sulphates and the quality of the wines tested. This only serves to reinforce the idea I stated at the start of the project, that there are no specific chemicals that make a wine good, but a combination of all.
-```{r echo=FALSE, Bivariate_Plots_10}
 
-p1 <- ggplot(aes(y=X, x = alcohol, color = classification), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
-p2 <- ggplot(aes(y=X, x = alcohol, color = quality), data = wines) + 
-  geom_point() +
-  scale_color_brewer(palette = "Dark2")
+```{r Bivariate_Plots_10}
+
+p1 <- create_plot_compare('alcohol', 'X', "quality")
+p2 <- create_plot_compare('alcohol', 'X', "quality")
 grid.arrange(p1, p2, ncol = 1)
   
 ```
+
 This last group of plots show a slight tendency of the high quality wine towards the highest alcohol values. As we can see the medium quality wine tend to have alcohol levels between 8.5 and 11. However after some tweaking of the data I realized that the high quality wines are spread across the whole range of values, which means that there is no direct correlation between the alcohol and the quality.
 
 # Bivariate Analysis
@@ -244,34 +272,73 @@ The strongest relationship found is the one between alcohol and quality when we 
 
 # Multivariate Plots Section
 
-```{r echo=FALSE, message=FALSE, Multivariate_Plots, fig.width = 18, fig.height = 20}
-ggpairs(wines, mapping = aes(color=classification), columns = c("X", "fixed.acidity", "volatile.acidity", "citric.acid", "residual.sugar", "chlorides", "free.sulfur.dioxide", "total.sulfur.dioxide", "density", "pH", "sulphates", "alcohol"))
+```{r fig.width = 18, fig.height = 20}
+ggpairs(wines, mapping = aes(color=classification), columns = c("X", 
+                                                                "fixed.acidity", 
+                                                                "volatile.acidity", 
+                                                                "citric.acid", 
+                                                                "residual.sugar", 
+                                                                "chlorides", 
+                                                                "free.sulfur.dioxide", 
+                                                                "total.sulfur.dioxide", 
+                                                                "density", 
+                                                                "pH", 
+                                                                "sulphates", 
+                                                                "alcohol"))
 ```
+
 Now that we can see the correlations for every variable in our dataset I am going to dig into the most promising ones in order to understand its relationship and to visualizeit more clearly.
-```{r echo=FALSE, Multivariate_Plots_1}
-ggplot(wines, aes(x = density, y = alcohol, color = quality)) +
-  geom_point()+
-  coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99)))
+
+```{r  Multivariate_Plots_1}
+create_plot_compare('density', 'alcohol', "quality")+
+  coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99))) 
 
 ```
+
 In this visualization it can be clearly spotted the progression of our points given their quality. As we can see the quality increases when the density lowers and the alcohol volume increases. This might be explained by the fact that the density of alcohol is lower than the density of the water, to be precise is 0.789 g/cm^3, whereas the water has a density of 1 g/cm^3.
 
-Now we are going to look into the relationship between the total sulfur dioxide and the free sulfur dioxide, but as it can be easily seen there is a relationship given that both of the variables are about the sulfur dioxide.
-```{r echo=FALSE, Multivariate_Plots_2}
-ggplot(wines, aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide, color = quality)) +
-  geom_point() 
-
+```{r  Multivariate_Plots_2}
+ggplot(wines, aes(x=density, y=alcohol))+
+  geom_point() +
+  coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99))) +
+  geom_smooth()
 ```
+
+This plot now using the geom smooth in which we can see the progression of the data. As we can see the line seems to be in correlation with the previous plot showing us the direction of the data. We now from the ggpairs function that the correlation is -0.78, however I have written a function to calculate the correlation so we can check if the correlation given by ggpairs is the Pearson correlation. Also we see this correlation being plotted because we see a decremental segment showing that the relationship between the variables in reversed.
+
+```{r}
+correlation(wines$density, wines$alcohol, length(wines$alcohol))
+```
+
+As we can see the value outputted is the same as the value given by the ggpairs correlation. This have helped me to find different values to compare based on the correlation values.
+Now we are going to look into the relationship between the total sulfur dioxide and the free sulfur dioxide, but as it can be easily seen there is a relationship given that both of the variables are about the sulfur dioxide.
+
+```{r  Multivariate_Plots_3}
+ggplot(wines, aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide, color = quality)) +
+  coord_cartesian(xlim = c(0, quantile(wines$free.sulfur.dioxide, 0.99))) +
+  geom_point() 
+```
+
 As we can see this correlation doesn't give us much insight about how this affects quality, given that the different qualities have points scattered across the plot. In order to prove this we executed the code showing different layers each time and we prove that the combination of values of free and total sulfur dioxide  doesn't have a direct impact in the quality of the wine.
+
+```{r  Multivariate_Plots_4}
+ggplot(wines, aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide)) +
+  geom_point() + 
+  coord_cartesian(xlim = c(0, quantile(wines$free.sulfur.dioxide, 0.99))) +
+  geom_smooth()
+```
+
+Here we have the same plot with a geom smooth so we can see the direction of the data as well as confirming the correlation value of 0.616 which means that they are directly correlated. This explains the look of the plot between 0 and 60 of free sulfur dioxide, because we clearly see a steady increase of both values at the same time.
 
 Sulfur dioxide plays two important roles. Firstly, it is an anti-microbial agent, and as such is used to help curtail the growth of undesirable fault producing yeasts and bacteria. Secondly, it acts as an antioxidant, safeguarding the wine's fruit integrity and protecting it against browning. This explains the need for having sulfur dioxide in the wine and why great quantities of it can be harmful to our quality. We can even see in the plot that some of the points are "far" from the main group meaning higher values and as we can see all does wines are classified as bad quality and some as medium.
 
-```{r echo=FALSE, Multivariate_Plots_3}
+```{r Multivariate_Plots_5}
 ggplot(wines, aes(x = fixed.acidity, y = pH, color = quality)) +
   geom_point() 
 
 ```
-Again we see some correlation between two different variables, but it doesn't seem to really relate to the quality. After some research we found out that the pH stands for "Potential of Hydrogen" which is a numeric scale used to specify the acidity or basicity. So once we look at the pH table we see that the values that we are working here are for extremely acidic substances, which relates with the fixed acidity values given that they are providing information about the same concept.
+
+Again we see some correlation between two different variables, but it doesn't seem to really relate to the quality. Given that we know that the correlation is -0.426 we now see that the correlation between these variables is indirect so if we were to plot the geom smooth we will see a decreasing segment. After some research we found out that the pH stands for "Potential of Hydrogen" which is a numeric scale used to specify the acidity or basicity. So once we look at the pH table we see that the values that we are working here are for extremely acidic substances, which relates with the fixed acidity values given that they are providing information about the same concept.
 
 Acids impart the sourness or tartness that is a fundamental feature in wine taste.  Wines lacking in acid are "flat."  Chemically the acids influence titratable acidity which affects taste and pH which affects  color, stability to oxidation, and consequently the overall lifespan of a wine (Water house lab UC DAVIS university). Thanks to the information provided by UC Davis university we know that the acidity has impact in the taste, however none significantly in our data. This could be due to the fact that the acidity of a wine is related to where was it harvested. As said by UC Davis university "wines produced from cool climate grapes are high in acidity and thus taste sour".It would be a nice addition to the dataset the location of the different wines so we could gain some insight about the wines tested.
 
@@ -307,7 +374,8 @@ The rest of the variables studied have some kind of relationship with the qualit
 # Final Plots and Summary
 
 ### Plot One
-```{r echo=FALSE, Plot_One}
+
+```{r Plot_One}
 ggplot(aes(x=quality), data = wines) + 
   ggtitle("Quality distribution") +
   geom_bar() +
@@ -317,13 +385,11 @@ ggplot(aes(x=quality), data = wines) +
 ### Description One
 This is one of the main univariate plots of the project. As we can see it tells us the distribution of our dataset given our main feature of interest. The bars show an practically symmetrical bar graph in which the biggest number of wines fall under the level 6 of quality. For the purpose of the study the number of elements is not as many as I would have wanted because making models with data which a great percentage fall under the same quality level is not going to give us as good results as we have wanted. In addition for all the future plots the results will not be ideal given that in order to compare qualities don't have enough data to be certain of possible distributions due to the fact that we have to account for possible outliers.
 ### Plot Two
-```{r echo=FALSE, Plot_Two}
 
-ggplot(aes(y=X, x = alcohol, color = classification), data = wines) + 
-  geom_point() +
+```{r Plot_Two}
+create_plot_compare('alcohol', 'X', "classification") +
   ggtitle("Alcohol scatterplot colored by quality") +
-  labs(x="Alcohol (cl/L) ", y="X") +
-  scale_color_brewer(palette = "Dark2") + 
+  labs(x="Alcohol (cl/L) ", y="X") + 
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -331,11 +397,11 @@ ggplot(aes(y=X, x = alcohol, color = classification), data = wines) +
 This plot is one of the most significant in the bivariate comparison. It may not show an specific correlation between the alcohol and the quality but it shows great promise. Due to the apparent grouping of the high quality wines in the alcohol volumes over 11. This made me think of how far the relationship between alcohol and quality might go and which other features might be involved. This plot has been colored with the classification variable because with the quality feature there were to many colors and the predominant one (6) collapse all the others. This way we try to bring some equilibrium to the dataset range.
 
 ### Plot Three
-```{r echo=FALSE, Plot_Three}
-ggplot(wines, aes(x = density, y = alcohol, color = quality)) +
-  geom_point()+
+
+```{r Plot_Three}
+create_plot_compare('density', 'alcohol', "quality")+
   ggtitle("Alcohol/Density colored by quality") +
-  labs(x="Alcohol (cl/L) ", y="Density (g/cm^3)") +
+  labs(y="Alcohol (cl/L) ", x="Density (g/cm^3)") +
   coord_cartesian(xlim = c(quantile(wines$density, 0.00),quantile(wines$density, 0.99))) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
